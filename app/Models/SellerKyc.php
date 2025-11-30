@@ -18,7 +18,6 @@ class SellerKyc extends Model
         'id_front_path',
         'id_back_path',
         'selfie_path',
-        'business_document_path',
         'business_registration_path',
         'tax_certificate_path',
         'status',

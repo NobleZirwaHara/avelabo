@@ -158,4 +158,60 @@ class Product extends Model
             && $this->stock_quantity > 0
             && $this->stock_quantity <= $this->low_stock_threshold;
     }
+
+    /**
+     * Get the customer-facing price (base price + markup)
+     * Markup is INVISIBLE to customers
+     */
+    public function getDisplayPriceAttribute(): float
+    {
+        return app(\App\Services\PriceService::class)->getDisplayPrice($this);
+    }
+
+    /**
+     * Get the customer-facing compare price (with markup applied)
+     */
+    public function getDisplayComparePriceAttribute(): ?float
+    {
+        if (!$this->compare_at_price) {
+            return null;
+        }
+
+        return app(\App\Services\PriceService::class)->getDisplayComparePrice($this);
+    }
+
+    /**
+     * Get primary image URL (returns the path for storage, not full URL)
+     */
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        $primaryImage = $this->images->where('is_primary', true)->first()
+            ?? $this->images->first();
+
+        return $primaryImage?->path;
+    }
+
+    /**
+     * Check if product is on sale (has compare price higher than display price)
+     */
+    public function getIsOnSaleAttribute(): bool
+    {
+        $comparePrice = $this->display_compare_price;
+        return $comparePrice && $comparePrice > $this->display_price;
+    }
+
+    /**
+     * Get discount percentage
+     */
+    public function getDiscountPercentageAttribute(): int
+    {
+        if (!$this->is_on_sale) {
+            return 0;
+        }
+
+        $comparePrice = $this->display_compare_price;
+        $displayPrice = $this->display_price;
+
+        return (int) round((($comparePrice - $displayPrice) / $comparePrice) * 100);
+    }
 }

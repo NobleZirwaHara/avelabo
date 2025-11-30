@@ -11,39 +11,51 @@ class ScrapingJob extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_RUNNING = 'running';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const TYPE_FULL = 'full';
+    public const TYPE_INCREMENTAL = 'incremental';
+    public const TYPE_CATEGORY = 'category';
+    public const TYPE_PRODUCT = 'product';
+
     protected $fillable = [
-        'scraping_source_id',
-        'type',
+        'source_id',
         'status',
-        'url',
-        'parameters',
+        'type',
+        'config',
         'products_found',
         'products_created',
         'products_updated',
-        'errors_count',
+        'products_failed',
+        'images_downloaded',
+        'error_message',
         'started_at',
         'completed_at',
-        'error_message',
     ];
 
     protected $casts = [
-        'parameters' => 'array',
+        'config' => 'array',
         'products_found' => 'integer',
         'products_created' => 'integer',
         'products_updated' => 'integer',
-        'errors_count' => 'integer',
+        'products_failed' => 'integer',
+        'images_downloaded' => 'integer',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 
     public function source(): BelongsTo
     {
-        return $this->belongsTo(ScrapingSource::class, 'scraping_source_id');
+        return $this->belongsTo(ScrapingSource::class, 'source_id');
     }
 
     public function logs(): HasMany
     {
-        return $this->hasMany(ScrapingLog::class);
+        return $this->hasMany(ScrapingLog::class, 'job_id');
     }
 
     public function scopePending($query)

@@ -224,4 +224,32 @@ class PriceService
         $currency = $currencyCode ?? $this->getCustomerCurrency();
         return $this->currencyService->format($amount, $currency);
     }
+
+    /**
+     * Get display price (base price + markup) - simple float for model attribute
+     */
+    public function getDisplayPrice(Product $product): float
+    {
+        return $this->markupService->getFinalPrice($product);
+    }
+
+    /**
+     * Get display compare price (compare_at_price + markup) - simple float for model attribute
+     */
+    public function getDisplayComparePrice(Product $product): ?float
+    {
+        if (!$product->compare_at_price) {
+            return null;
+        }
+
+        $basePrice = $product->base_price;
+        if ($basePrice <= 0) {
+            return $product->compare_at_price;
+        }
+
+        $finalPrice = $this->markupService->getFinalPrice($product);
+        $markupRatio = $finalPrice / $basePrice;
+
+        return round($product->compare_at_price * $markupRatio, 2);
+    }
 }

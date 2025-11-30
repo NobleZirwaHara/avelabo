@@ -10,26 +10,26 @@ class ScrapingLog extends Model
 {
     use HasFactory;
 
+    public const LEVEL_DEBUG = 'debug';
+    public const LEVEL_INFO = 'info';
+    public const LEVEL_WARNING = 'warning';
+    public const LEVEL_ERROR = 'error';
+
     protected $fillable = [
-        'scraping_source_id',
-        'scraping_job_id',
+        'job_id',
         'level',
         'message',
         'context',
+        'url',
     ];
 
     protected $casts = [
         'context' => 'array',
     ];
 
-    public function source(): BelongsTo
-    {
-        return $this->belongsTo(ScrapingSource::class, 'scraping_source_id');
-    }
-
     public function job(): BelongsTo
     {
-        return $this->belongsTo(ScrapingJob::class, 'scraping_job_id');
+        return $this->belongsTo(ScrapingJob::class, 'job_id');
     }
 
     public function scopeLevel($query, string $level)

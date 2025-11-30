@@ -38,6 +38,15 @@ class DatabaseSeeder extends Seeder
 
             // Application settings
             SettingSeeder::class,
+
+            // Test sellers
+            SellerSeeder::class,
+
+            // Scraping sources
+            ScrapingSourceSeeder::class,
+
+            // Test products
+            ProductSeeder::class,
         ]);
     }
 }

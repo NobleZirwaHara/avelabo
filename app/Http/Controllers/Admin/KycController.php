@@ -39,9 +39,18 @@ class KycController extends Controller
         ];
 
         return Inertia::render('Admin/Kyc/Index', [
-            'kycs' => $kycs,
-            'stats' => $stats,
-            'filters' => $request->only(['status', 'search']),
+            'kycApplications' => $kycs,
+            'filters' => [
+                'status' => $request->status,
+                'search' => $request->search,
+                'counts' => [
+                    'all' => SellerKyc::count(),
+                    'pending' => $stats['pending'],
+                    'approved' => $stats['approved'],
+                    'rejected' => $stats['rejected'],
+                    'under_review' => SellerKyc::where('status', 'under_review')->count(),
+                ],
+            ],
         ]);
     }
 
@@ -51,19 +60,40 @@ class KycController extends Controller
     public function show(SellerKyc $kyc)
     {
         $kyc->load([
-            'seller:id,shop_name,description,business_type,business_registration_number,phone,address,status,created_at',
+            'seller:id,shop_name,description,business_type,business_name,business_registration_number,status,created_at',
             'seller.user:id,name,email,phone,created_at',
             'reviewer:id,name',
         ]);
 
+        // Build document URLs - handle case where private disk doesn't support temporary URLs
+        $documentUrls = [
+            'id_front' => null,
+            'id_back' => null,
+            'selfie' => null,
+            'business_registration' => null,
+        ];
+
+        try {
+            if ($kyc->id_front_path) {
+                $documentUrls['id_front'] = Storage::disk('private')->url($kyc->id_front_path);
+            }
+            if ($kyc->id_back_path) {
+                $documentUrls['id_back'] = Storage::disk('private')->url($kyc->id_back_path);
+            }
+            if ($kyc->selfie_path) {
+                $documentUrls['selfie'] = Storage::disk('private')->url($kyc->selfie_path);
+            }
+            if ($kyc->business_registration_path) {
+                $documentUrls['business_registration'] = Storage::disk('private')->url($kyc->business_registration_path);
+            }
+        } catch (\Exception $e) {
+            // Fallback for development - just use the paths
+        }
+
         return Inertia::render('Admin/Kyc/Show', [
             'kyc' => $kyc,
-            'documentUrls' => [
-                'id_front' => $kyc->id_front_path ? Storage::disk('private')->temporaryUrl($kyc->id_front_path, now()->addMinutes(30)) : null,
-                'id_back' => $kyc->id_back_path ? Storage::disk('private')->temporaryUrl($kyc->id_back_path, now()->addMinutes(30)) : null,
-                'selfie' => $kyc->selfie_path ? Storage::disk('private')->temporaryUrl($kyc->selfie_path, now()->addMinutes(30)) : null,
-                'business_document' => $kyc->business_document_path ? Storage::disk('private')->temporaryUrl($kyc->business_document_path, now()->addMinutes(30)) : null,
-            ],
+            'seller' => $kyc->seller,
+            'documentUrls' => $documentUrls,
         ]);
     }
 
@@ -72,7 +102,7 @@ class KycController extends Controller
      */
     public function approve(Request $request, SellerKyc $kyc)
     {
-        if ($kyc->status !== 'pending') {
+        if (!in_array($kyc->status, ['pending', 'under_review'])) {
             return back()->with('error', 'This KYC application has already been processed.');
         }
 
@@ -83,10 +113,11 @@ class KycController extends Controller
             'rejection_reason' => null,
         ]);
 
-        // Update seller status to approved
+        // Update seller status to active
         $kyc->seller->update([
-            'status' => 'approved',
+            'status' => 'active',
             'is_verified' => true,
+            'approved_at' => now(),
         ]);
 
         // TODO: Send approval email to seller
@@ -100,7 +131,7 @@ class KycController extends Controller
      */
     public function reject(Request $request, SellerKyc $kyc)
     {
-        if ($kyc->status !== 'pending') {
+        if (!in_array($kyc->status, ['pending', 'under_review'])) {
             return back()->with('error', 'This KYC application has already been processed.');
         }
 
@@ -115,9 +146,9 @@ class KycController extends Controller
             'rejection_reason' => $validated['rejection_reason'],
         ]);
 
-        // Update seller status
+        // Keep seller in pending status so they can resubmit
         $kyc->seller->update([
-            'status' => 'rejected',
+            'status' => 'pending',
         ]);
 
         // TODO: Send rejection email to seller with reason
@@ -132,16 +163,17 @@ class KycController extends Controller
     public function requestDocuments(Request $request, SellerKyc $kyc)
     {
         $validated = $request->validate([
-            'message' => ['required', 'string', 'max:1000'],
+            'rejection_reason' => ['required', 'string', 'max:1000'],
         ]);
 
         $kyc->update([
-            'status' => 'documents_requested',
-            'rejection_reason' => $validated['message'],
+            'status' => 'under_review',
+            'rejection_reason' => $validated['rejection_reason'],
         ]);
 
+        // Keep seller in pending status
         $kyc->seller->update([
-            'status' => 'documents_requested',
+            'status' => 'pending',
         ]);
 
         // TODO: Send email requesting additional documents

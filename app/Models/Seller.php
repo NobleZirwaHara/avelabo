@@ -25,10 +25,6 @@ class Seller extends Model
         'business_registration_number',
         'default_currency_id',
         'country_id',
-        'city_id',
-        'phone',
-        'address',
-        'markup_template_id',
         'status',
         'rating',
         'total_reviews',
@@ -125,12 +121,12 @@ class Seller extends Model
 
     public function isApproved(): bool
     {
-        return $this->status === 'approved';
+        return $this->status === 'active';
     }
 
     public function isPending(): bool
     {
-        return in_array($this->status, ['pending', 'pending_kyc']);
+        return $this->status === 'pending';
     }
 
     public function getDefaultBankAccount(): ?SellerBankAccount

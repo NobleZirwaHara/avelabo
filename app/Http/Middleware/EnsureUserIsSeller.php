@@ -26,8 +26,8 @@ class EnsureUserIsSeller
             return redirect()->route('seller.register');
         }
 
-        // Check if seller is approved (allow access to status page if not approved)
-        if ($user->seller->status !== 'approved') {
+        // Check if seller is active (allow access to status page if not active)
+        if ($user->seller->status !== 'active') {
             $allowedRoutes = ['seller.kyc.create', 'seller.kyc.store', 'seller.kyc.status'];
 
             if (!in_array($request->route()->getName(), $allowedRoutes)) {

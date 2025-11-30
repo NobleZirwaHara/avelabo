@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Gateways
+    |--------------------------------------------------------------------------
+    */
+
+    'paychangu' => [
+        'api_key' => env('PAYCHANGU_API_KEY'),
+        'secret_key' => env('PAYCHANGU_SECRET_KEY'),
+        'test_mode' => env('PAYCHANGU_TEST_MODE', true),
+    ],
+
+    'onekhusa' => [
+        'api_key' => env('ONEKHUSA_API_KEY'),
+        'api_secret' => env('ONEKHUSA_API_SECRET'),
+        'base_url' => env('ONEKHUSA_BASE_URL', 'https://api.onekhusa.com'),
+    ],
+
 ];

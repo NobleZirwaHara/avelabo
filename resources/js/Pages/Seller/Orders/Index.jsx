@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import SellerLayout from '@/Layouts/SellerLayout';
 import { useState } from 'react';
 
-export default function OrdersIndex({ orders, filters }) {
+export default function OrdersIndex({ orders, stats, filters }) {
     const [status, setStatus] = useState(filters?.status || '');
     const [search, setSearch] = useState(filters?.search || '');
 
@@ -24,23 +24,23 @@ export default function OrdersIndex({ orders, filters }) {
         }).format(amount || 0);
     };
 
-    const statusColors = {
-        pending: 'bg-yellow-100 text-yellow-700',
-        confirmed: 'bg-blue-100 text-blue-700',
-        processing: 'bg-purple-100 text-purple-700',
-        shipped: 'bg-indigo-100 text-indigo-700',
-        delivered: 'bg-green-100 text-green-700',
-        cancelled: 'bg-red-100 text-red-700',
+    const getItemStatusColor = (status) => {
+        const colors = {
+            pending: 'bg-yellow-100 text-yellow-700',
+            processing: 'bg-blue-100 text-blue-700',
+            shipped: 'bg-purple-100 text-purple-700',
+            delivered: 'bg-green-100 text-green-700',
+            cancelled: 'bg-red-100 text-red-700',
+        };
+        return colors[status] || 'bg-gray-100 text-gray-700';
     };
 
     const statusTabs = [
-        { value: '', label: 'All Orders' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'confirmed', label: 'Confirmed' },
-        { value: 'processing', label: 'Processing' },
-        { value: 'shipped', label: 'Shipped' },
-        { value: 'delivered', label: 'Delivered' },
-        { value: 'cancelled', label: 'Cancelled' },
+        { value: '', label: 'All', count: null },
+        { value: 'pending', label: 'Pending', count: stats?.pending },
+        { value: 'processing', label: 'Processing', count: stats?.processing },
+        { value: 'shipped', label: 'Shipped', count: stats?.shipped },
+        { value: 'delivered', label: 'Delivered', count: stats?.delivered },
     ];
 
     return (
@@ -50,7 +50,27 @@ export default function OrdersIndex({ orders, filters }) {
             {/* Header */}
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Orders</h2>
-                <p className="text-gray-500 text-sm">Manage and track your customer orders</p>
+                <p className="text-gray-500 text-sm">Manage and fulfill your customer orders</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-800 dark:text-yellow-300">{stats?.pending || 0}</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-400">Processing</p>
+                    <p className="text-2xl font-bold text-blue-800 dark:text-blue-300">{stats?.processing || 0}</p>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                    <p className="text-sm text-purple-700 dark:text-purple-400">Shipped</p>
+                    <p className="text-2xl font-bold text-purple-800 dark:text-purple-300">{stats?.shipped || 0}</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                    <p className="text-sm text-green-700 dark:text-green-400">Delivered</p>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-300">{stats?.delivered || 0}</p>
+                </div>
             </div>
 
             {/* Status Tabs */}
@@ -60,13 +80,22 @@ export default function OrdersIndex({ orders, filters }) {
                         <button
                             key={tab.value}
                             onClick={() => handleFilter(tab.value)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                                 status === tab.value
                                     ? 'bg-brand text-white'
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                             }`}
                         >
                             {tab.label}
+                            {tab.count !== null && tab.count > 0 && (
+                                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                    status === tab.value
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                                }`}>
+                                    {tab.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -94,81 +123,89 @@ export default function OrdersIndex({ orders, filters }) {
                 </form>
             </div>
 
-            {/* Orders Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {/* Orders List */}
+            <div className="space-y-4">
                 {orders?.data?.length > 0 ? (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 dark:bg-gray-700/50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Order
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Customer
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Items
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Total
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Date
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {orders.data.map((order) => (
-                                        <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <p className="font-medium text-gray-900 dark:text-white">{order.order_number}</p>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">{order.user?.name}</p>
-                                                    <p className="text-sm text-gray-500">{order.user?.email}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-gray-900 dark:text-white">{order.items_count} items</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(order.total)}</p>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
-                                                    {order.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {orders.data.map((order) => (
+                            <div key={order.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                {/* Order Header */}
+                                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-500">Order</span>
+                                            <p className="font-semibold text-gray-900 dark:text-white">{order.order_number}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-500">Customer</span>
+                                            <p className="text-gray-900 dark:text-white">{order.customer_name}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-500">Date</span>
+                                            <p className="text-gray-900 dark:text-white">
                                                 {new Date(order.created_at).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <Link
-                                                    href={route('seller.orders.show', order.id)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                                                >
-                                                    <span className="material-icons text-lg">visibility</span>
-                                                    View
-                                                </Link>
-                                            </td>
-                                        </tr>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="font-bold text-brand text-lg">
+                                        {formatCurrency(order.seller_total)}
+                                    </div>
+                                </div>
+
+                                {/* Items */}
+                                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {order.items?.map((item) => (
+                                        <div key={item.id} className="p-4 flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+                                                {item.product_image ? (
+                                                    <img
+                                                        src={`/storage/${item.product_image}`}
+                                                        alt={item.product_name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="material-icons text-gray-400">image</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-900 dark:text-white truncate">{item.product_name}</p>
+                                                {item.variant_name && (
+                                                    <p className="text-xs text-gray-500">{item.variant_name}</p>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                Qty: {item.quantity}
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {formatCurrency(item.line_total)}
+                                                </p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getItemStatusColor(item.status)}`}>
+                                                {item.status}
+                                            </span>
+                                        </div>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                                    <Link
+                                        href={route('seller.orders.show', order.id)}
+                                        className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-brand text-white hover:bg-brand-dark rounded-lg transition-colors"
+                                    >
+                                        <span className="material-icons text-lg">visibility</span>
+                                        Manage Order
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
 
                         {/* Pagination */}
                         {orders.last_page > 1 && (
-                            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-6 py-4">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm text-gray-500">
                                         Showing {orders.from} to {orders.to} of {orders.total} orders
@@ -194,7 +231,7 @@ export default function OrdersIndex({ orders, filters }) {
                         )}
                     </>
                 ) : (
-                    <div className="p-12 text-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-12 text-center">
                         <span className="material-icons text-5xl text-gray-300 mb-4">inbox</span>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No orders found</h3>
                         <p className="text-gray-500">

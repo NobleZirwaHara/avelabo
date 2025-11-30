@@ -12,6 +12,22 @@ use App\Http\Controllers\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Admin\KycController;
 use App\Http\Controllers\Admin\SellerController as AdminSellerController;
 use App\Http\Controllers\Admin\MarkupTemplateController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\ShopController;
+use App\Http\Controllers\Frontend\CartController;
+use App\Http\Controllers\Frontend\CheckoutController;
+use App\Http\Controllers\Frontend\PaymentController;
+use App\Http\Controllers\Frontend\OrderController as CustomerOrderController;
+use App\Http\Controllers\Frontend\AccountController;
+use App\Http\Controllers\Frontend\VendorController;
+use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PageContentController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\ScrapingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,21 +37,25 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return Inertia::render('Frontend/Home');
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/shop', function () {
-    return Inertia::render('Frontend/Shop');
-})->name('shop');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+Route::get('/product/{slug}', [ShopController::class, 'show'])->name('product.detail');
 
-Route::get('/product/{slug}', function ($slug) {
-    return Inertia::render('Frontend/ProductDetail', ['slug' => $slug]);
-})->name('product.detail');
-
-Route::get('/cart', function () {
-    return Inertia::render('Frontend/Cart');
-})->name('cart');
+/*
+|--------------------------------------------------------------------------
+| Cart Routes (Public - works with session for guests)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('cart')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('cart');
+    Route::post('/add', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/{cartItem}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/{cartItem}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/', [CartController::class, 'clear'])->name('cart.clear');
+    Route::get('/count', [CartController::class, 'count'])->name('cart.count');
+    Route::get('/data', [CartController::class, 'getCart'])->name('cart.data');
+});
 
 Route::get('/wishlist', function () {
     return Inertia::render('Frontend/Wishlist');
@@ -49,33 +69,19 @@ Route::get('/about', function () {
     return Inertia::render('Frontend/About');
 })->name('about');
 
-Route::get('/contact', function () {
-    return Inertia::render('Frontend/Contact');
-})->name('contact');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::get('/blog', function () {
     return Inertia::render('Frontend/Blog');
 })->name('blog');
 
-Route::get('/vendors', function () {
-    return Inertia::render('Frontend/Vendors');
-})->name('vendors');
+Route::get('/vendors', [VendorController::class, 'index'])->name('vendors');
+Route::get('/vendor/{slug}', [VendorController::class, 'show'])->name('vendor.details');
 
-Route::get('/vendor-guide', function () {
-    return Inertia::render('Frontend/VendorGuide');
-})->name('vendor.guide');
-
-Route::get('/vendor/{id}', function ($id) {
-    return Inertia::render('Frontend/VendorDetails1', ['id' => $id]);
-})->name('vendor.details');
-
-Route::get('/privacy-policy', function () {
-    return Inertia::render('Frontend/PrivacyPolicy');
-})->name('privacy.policy');
-
-Route::get('/purchase-guide', function () {
-    return Inertia::render('Frontend/PurchaseGuide');
-})->name('purchase.guide');
+Route::get('/vendor-guide', [PageController::class, 'vendorGuide'])->name('vendor.guide');
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/purchase-guide', [PageController::class, 'purchaseGuide'])->name('purchase.guide');
 
 /*
 |--------------------------------------------------------------------------
@@ -101,18 +107,65 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+/*
+|--------------------------------------------------------------------------
+| Checkout Routes (Guests allowed with Quick Checkout)
+|--------------------------------------------------------------------------
+*/
+Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
+Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+
+/*
+|--------------------------------------------------------------------------
+| Payment Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('payment')->group(function () {
+    Route::post('/initiate/{order}', [PaymentController::class, 'initiate'])->name('payment.initiate');
+    Route::get('/callback', [PaymentController::class, 'callback'])->name('payment.callback');
+    Route::post('/webhook/{gateway}', [PaymentController::class, 'webhook'])->name('payment.webhook')->withoutMiddleware(['web', 'csrf']);
+    Route::get('/verify/{reference}', [PaymentController::class, 'verify'])->name('payment.verify');
+    Route::get('/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Account Routes (Authenticated)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
+    Route::get('/', [AccountController::class, 'index'])->name('index');
+    Route::put('/profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/password', [AccountController::class, 'updatePassword'])->name('password.update');
+    Route::post('/track-order', [AccountController::class, 'trackOrder'])->name('track-order');
+
+    // Address management
+    Route::post('/addresses', [AccountController::class, 'storeAddress'])->name('addresses.store');
+    Route::put('/addresses/{address}', [AccountController::class, 'updateAddress'])->name('addresses.update');
+    Route::delete('/addresses/{address}', [AccountController::class, 'destroyAddress'])->name('addresses.destroy');
+    Route::post('/addresses/{address}/default', [AccountController::class, 'setDefaultAddress'])->name('addresses.default');
+});
+
+// Keep the /account route for backwards compatibility
+Route::middleware(['auth', 'verified'])->get('/account', [AccountController::class, 'index'])->name('account');
+
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/checkout', function () {
-        return Inertia::render('Frontend/Checkout');
-    })->name('checkout');
-
-    Route::get('/account', function () {
-        return Inertia::render('Frontend/Account');
-    })->name('account');
-
     Route::get('/invoice/{id?}', function ($id = null) {
         return Inertia::render('Frontend/Invoice', ['id' => $id]);
     })->name('invoice');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Customer Order Routes (Authenticated)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
+    Route::get('/orders', [CustomerOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [CustomerOrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->name('orders.cancel');
 });
 
 /*
@@ -143,6 +196,7 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [SellerOrderController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/status', [SellerOrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::post('/orders/{order}/bulk-status', [SellerOrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
 
         // Profile & Settings
         Route::get('/profile', function () {
@@ -215,39 +269,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('markup-templates', MarkupTemplateController::class);
 
     // Products
-    Route::get('/products', function () {
-        return Inertia::render('Admin/Products/Index');
-    })->name('products.index');
-
-    Route::get('/products/grid', function () {
-        return Inertia::render('Admin/Products/Grid');
-    })->name('products.grid');
-
-    Route::get('/products/create', function () {
-        return Inertia::render('Admin/Products/Create');
-    })->name('products.create');
-
-    Route::get('/products/{id}', function ($id) {
-        return Inertia::render('Admin/Products/Show', ['id' => $id]);
-    })->name('products.show');
-
-    Route::get('/products/{id}/edit', function ($id) {
-        return Inertia::render('Admin/Products/Edit', ['id' => $id]);
-    })->name('products.edit');
+    Route::resource('products', AdminProductController::class);
+    Route::post('/products/bulk-status', [AdminProductController::class, 'bulkUpdateStatus'])->name('products.bulk-status');
+    Route::post('/products/bulk-delete', [AdminProductController::class, 'bulkDestroy'])->name('products.bulk-delete');
+    Route::patch('/products/{product}/stock', [AdminProductController::class, 'updateStock'])->name('products.update-stock');
 
     // Categories
-    Route::get('/categories', function () {
-        return Inertia::render('Admin/Categories/Index');
-    })->name('categories.index');
+    Route::resource('categories', AdminCategoryController::class);
+    Route::post('/categories/update-order', [AdminCategoryController::class, 'updateOrder'])->name('categories.update-order');
+    Route::patch('/categories/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+    Route::patch('/categories/{category}/toggle-featured', [AdminCategoryController::class, 'toggleFeatured'])->name('categories.toggle-featured');
 
     // Orders
-    Route::get('/orders', function () {
-        return Inertia::render('Admin/Orders/Index');
-    })->name('orders.index');
-
-    Route::get('/orders/{id}', function ($id) {
-        return Inertia::render('Admin/Orders/Show', ['id' => $id]);
-    })->name('orders.show');
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::post('/orders/{order}/refund', [AdminOrderController::class, 'refund'])->name('orders.refund');
 
     // Transactions
     Route::get('/transactions', function () {
@@ -276,4 +313,30 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/settings', function () {
         return Inertia::render('Admin/Settings/Index');
     })->name('settings');
+
+    // Page Content Management
+    Route::resource('pages', PageContentController::class)->parameters(['pages' => 'page']);
+
+    // Contact Messages
+    Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::put('/contact-messages/{contactMessage}', [ContactMessageController::class, 'update'])->name('contact-messages.update');
+    Route::put('/contact-messages/{contactMessage}/mark-replied', [ContactMessageController::class, 'markAsReplied'])->name('contact-messages.mark-replied');
+    Route::put('/contact-messages/{contactMessage}/archive', [ContactMessageController::class, 'archive'])->name('contact-messages.archive');
+    Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::post('/contact-messages/bulk-action', [ContactMessageController::class, 'bulkAction'])->name('contact-messages.bulk-action');
+
+    // Scraping Management
+    Route::prefix('scraping')->name('scraping.')->group(function () {
+        Route::get('/', [ScrapingController::class, 'index'])->name('index');
+        Route::get('/create', [ScrapingController::class, 'create'])->name('create');
+        Route::post('/', [ScrapingController::class, 'store'])->name('store');
+        Route::get('/sources/{source}', [ScrapingController::class, 'show'])->name('show');
+        Route::put('/sources/{source}', [ScrapingController::class, 'update'])->name('update');
+        Route::delete('/sources/{source}', [ScrapingController::class, 'destroy'])->name('destroy');
+        Route::post('/sources/{source}/toggle-active', [ScrapingController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/sources/{source}/start-job', [ScrapingController::class, 'startJob'])->name('start-job');
+        Route::get('/jobs/{job}', [ScrapingController::class, 'showJob'])->name('job');
+        Route::post('/jobs/{job}/cancel', [ScrapingController::class, 'cancelJob'])->name('cancel-job');
+    });
 });

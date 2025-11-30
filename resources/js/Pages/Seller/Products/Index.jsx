@@ -127,12 +127,14 @@ export default function ProductsIndex({ products, filters }) {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    product.is_active
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                                                    product.status === 'active'
                                                         ? 'bg-green-100 text-green-700'
+                                                        : product.status === 'draft'
+                                                        ? 'bg-yellow-100 text-yellow-700'
                                                         : 'bg-gray-100 text-gray-700'
                                                 }`}>
-                                                    {product.is_active ? 'Active' : 'Inactive'}
+                                                    {product.status}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">

@@ -29,7 +29,7 @@ class ProductController extends Controller
         $seller = Auth::user()->seller;
 
         $products = Product::where('seller_id', $seller->id)
-            ->with(['category:id,name', 'brand:id,name', 'images' => fn($q) => $q->where('is_primary', true)])
+            ->with(['category:id,name', 'brand:id,name', 'images'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -41,6 +41,12 @@ class ProductController extends Controller
             ->latest()
             ->paginate(15)
             ->withQueryString();
+
+        // Transform to include primary image URL
+        $products->through(function ($product) {
+            $product->primary_image = $product->primary_image_url;
+            return $product;
+        });
 
         return Inertia::render('Seller/Products/Index', [
             'products' => $products,
@@ -133,7 +139,7 @@ class ProductController extends Controller
                     $path = $image->store("products/{$product->id}", 'public');
                     ProductImage::create([
                         'product_id' => $product->id,
-                        'url' => $path,
+                        'path' => $path,
                         'alt_text' => $product->name,
                         'sort_order' => $sortOrder++,
                         'is_primary' => $index === 0,

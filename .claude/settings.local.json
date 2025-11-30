@@ -5,7 +5,8 @@
       "Bash(findstr:*)",
       "Bash(composer require:*)",
       "Bash(php -r:*)",
-      "Bash(php composer.phar require:*)"
+      "Bash(php composer.phar require:*)",
+      "WebFetch(domain:docs.onekhusa.com)"
     ],
     "deny": [],
     "ask": []

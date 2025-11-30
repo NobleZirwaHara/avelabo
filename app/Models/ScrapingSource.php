@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ScrapingSource extends Model
@@ -12,38 +13,57 @@ class ScrapingSource extends Model
 
     protected $fillable = [
         'name',
-        'code',
+        'slug',
         'base_url',
-        'logo',
-        'is_active',
+        'seller_id',
+        'default_currency_id',
+        'default_category_id',
         'config',
-        'rate_limit_per_minute',
+        'schedule',
+        'is_active',
+        'auto_publish',
         'last_scraped_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'config' => 'encrypted:array',
-        'rate_limit_per_minute' => 'integer',
+        'auto_publish' => 'boolean',
+        'config' => 'array',
         'last_scraped_at' => 'datetime',
     ];
 
-    protected $hidden = [
-        'config',
-    ];
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(Seller::class);
+    }
+
+    public function defaultCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'default_currency_id');
+    }
+
+    public function defaultCategory(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'default_category_id');
+    }
 
     public function jobs(): HasMany
     {
-        return $this->hasMany(ScrapingJob::class);
+        return $this->hasMany(ScrapingJob::class, 'source_id');
     }
 
     public function logs(): HasMany
     {
-        return $this->hasMany(ScrapingLog::class);
+        return $this->hasMany(ScrapingLog::class, 'source_id');
     }
 
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getLatestJobAttribute(): ?ScrapingJob
+    {
+        return $this->jobs()->latest()->first();
     }
 }

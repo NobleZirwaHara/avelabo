@@ -12,11 +12,13 @@ class ProductImage extends Model
 
     protected $fillable = [
         'product_id',
-        'url',
+        'path',
         'alt_text',
         'sort_order',
         'is_primary',
     ];
+
+    protected $appends = ['url'];
 
     protected $casts = [
         'sort_order' => 'integer',
@@ -36,5 +38,14 @@ class ProductImage extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+    public function getUrlAttribute(): ?string
+    {
+        if (!$this->path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->path);
     }
 }

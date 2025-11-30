@@ -1,1 +1,28 @@
-Go
+
+  Scraping UI Enhancements Complete
+
+  Index Page (Admin/Scraping/Index.jsx)
+
+  - Quick Scrape Panel: Paste a product/category URL to instantly start scraping
+  - Start All Sources: One-click button to start all active sources
+  - Auto-refresh: Page auto-refreshes every 5 seconds when jobs are running
+  - Running Jobs Alert: Visual indicator showing active jobs with animated icon
+  - Cancel Job: Cancel running or pending jobs directly from the table
+  - Help Section: Documentation explaining Quick Scrape, Full Scrape, and Scheduled Scrapes
+
+  Show/Details Page (Admin/Scraping/Show.jsx)
+
+  - Settings Panel with 4 tabbed sections:
+    a. General: Source name, base URL, seller, currency, default category, active status, auto-publish
+    b. Schedule: Quick preset schedules (Manual, Hourly, Daily, Weekly) + custom cron expression input
+    c. Categories: Add/remove specific category URLs to scrape
+    d. Advanced: Max pages, request delays, page timeouts, concurrent requests, download images
+  toggle, skip existing toggle, headless mode
+  - Start Scrape Button: Direct button to start a full scrape
+  - Auto-refresh: Updates every 5 seconds when jobs are running
+
+  Job Page (Admin/Scraping/Job.jsx)
+
+  - Auto-refresh: Updates every 3 seconds when job is running/pending
+  - Cancel Job: Button to cancel running jobs
+  - Real-time Logs: View logs as they're generated
