@@ -5,17 +5,43 @@ export default function ProductCard({ product }) {
         id = 1,
         name = 'Product Name',
         slug = 'product-name',
+        primary_image,
         image = '/images/frontend/shop/product-1-1.jpg',
         hoverImage = '/images/frontend/shop/product-1-2.jpg',
-        category = 'Snack',
-        brand = 'NestFood',
-        rating = 4,
+        category,
+        seller,
+        rating = 0,
+        reviews_count = 0,
         reviews = 0,
+        price,
         currentPrice = 28.85,
-        oldPrice = 32.00,
+        compare_price,
+        oldPrice = null,
         badge = null, // 'hot', 'new', 'sale', 'best'
         discount = null, // e.g. '-15%'
+        is_featured = false,
+        is_new = false,
+        is_on_sale = false,
     } = product || {};
+
+    // Handle category - could be string or object
+    const categoryName = typeof category === 'object' ? category?.name : category || 'General';
+
+    // Handle seller/brand - could be string or object
+    const brandName = typeof seller === 'object' ? seller?.shop_name : (seller || 'Avelabo');
+
+    // Handle image
+    const productImage = primary_image || image || '/images/frontend/placeholder-product.png';
+
+    // Handle price
+    const displayPrice = price || currentPrice || 0;
+    const displayOldPrice = compare_price || oldPrice;
+
+    // Handle reviews count
+    const reviewCount = reviews_count || reviews || 0;
+
+    // Determine badge
+    const displayBadge = badge || (is_featured ? 'hot' : is_new ? 'new' : is_on_sale ? 'sale' : null);
 
     const renderStars = () => {
         const stars = [];
@@ -37,9 +63,9 @@ export default function ProductCard({ product }) {
     return (
         <div className="product-card bg-white border border-gray-100 rounded-xl p-4 relative group">
             {/* Badge */}
-            {badge && (
-                <span className={`absolute top-4 left-4 px-3 py-1 text-xs font-semibold rounded badge-${badge}`}>
-                    {badge.charAt(0).toUpperCase() + badge.slice(1)}
+            {displayBadge && (
+                <span className={`absolute top-4 left-4 px-3 py-1 text-xs font-semibold rounded badge-${displayBadge}`}>
+                    {displayBadge.charAt(0).toUpperCase() + displayBadge.slice(1)}
                 </span>
             )}
 
@@ -54,14 +80,10 @@ export default function ProductCard({ product }) {
             <div className="relative overflow-hidden mb-4">
                 <Link href={`/product/${slug}`}>
                     <img
-                        src={image}
+                        src={productImage}
                         alt={name}
-                        className="w-full aspect-square object-contain group-hover:hidden transition-all"
-                    />
-                    <img
-                        src={hoverImage}
-                        alt={name}
-                        className="w-full aspect-square object-contain hidden group-hover:block transition-all"
+                        className="w-full aspect-square object-contain transition-all"
+                        onError={(e) => { e.target.src = '/images/frontend/placeholder-product.png'; }}
                     />
                 </Link>
 
@@ -87,7 +109,7 @@ export default function ProductCard({ product }) {
             </div>
 
             {/* Category */}
-            <p className="text-xs text-body mb-2">{category}</p>
+            <p className="text-xs text-body mb-2">{categoryName}</p>
 
             {/* Product Name */}
             <h6 className="mb-2">
@@ -99,20 +121,24 @@ export default function ProductCard({ product }) {
             {/* Rating */}
             <div className="flex items-center gap-2 mb-3">
                 <div className="flex">{renderStars()}</div>
-                <span className="text-sm text-body">({reviews})</span>
+                <span className="text-sm text-body">({reviewCount})</span>
             </div>
 
             {/* Vendor */}
             <p className="text-xs text-body mb-3">
-                By <Link href="#" className="text-brand">{brand}</Link>
+                By <span className="text-brand">{brandName}</span>
             </p>
 
             {/* Price & Add to Cart */}
             <div className="flex items-center justify-between">
                 <div>
-                    <span className="text-brand font-bold text-lg">${currentPrice.toFixed(2)}</span>
-                    {oldPrice && (
-                        <span className="text-body line-through text-sm ml-2">${oldPrice.toFixed(2)}</span>
+                    <span className="text-brand font-bold text-lg">
+                        {new Intl.NumberFormat('en-MW', { style: 'currency', currency: 'MWK', minimumFractionDigits: 0 }).format(displayPrice)}
+                    </span>
+                    {displayOldPrice && displayOldPrice > displayPrice && (
+                        <span className="text-body line-through text-sm ml-2">
+                            {new Intl.NumberFormat('en-MW', { style: 'currency', currency: 'MWK', minimumFractionDigits: 0 }).format(displayOldPrice)}
+                        </span>
                     )}
                 </div>
                 <button className="bg-brand-light text-brand px-4 py-2 rounded text-sm font-semibold hover:bg-brand hover:text-white transition-colors">
