@@ -20,7 +20,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
     return (
         <>
             {/* Top Bar */}
-            <div className="hidden lg:block bg-white border-b border-gray-100">
+            {/* <div className="hidden lg:block bg-white border-b border-gray-100">
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between py-2 text-sm">
                         <div className="flex items-center gap-6 text-body">
@@ -52,7 +52,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* Middle Header */}
             <div className="bg-white py-4 lg:py-6 border-b border-gray-100">
@@ -93,16 +93,6 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
 
                         {/* Header Actions */}
                         <div className="flex items-center gap-4 lg:gap-6">
-                            {/* Compare */}
-                            <Link href="/compare" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
-                                <div className="relative">
-                                    <img src="/images/frontend/theme/icons/icon-compare.svg" alt="Compare" className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        {counts?.compare || 0}
-                                    </span>
-                                </div>
-                                <span className="text-sm">Compare</span>
-                            </Link>
 
                             {/* Wishlist */}
                             <Link href="/wishlist" className="hidden lg:flex items-center gap-2 text-heading hover:text-brand transition-colors">
@@ -151,7 +141,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                 <div className="container mx-auto px-4">
                     <div className="hidden lg:flex items-center justify-between py-3">
                         {/* Categories Dropdown */}
-                        {!isSticky && (
+                        {(
                             <div className="relative">
                                 <button
                                     onClick={() => setCategoriesOpen(!categoriesOpen)}
@@ -160,7 +150,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
-                                    <span className="font-semibold">Browse All Categories</span>
+                                    <span className="font-semibold">All</span>
                                     <svg className={`w-4 h-4 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -195,9 +185,9 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                         )}
 
                         {/* Main Navigation / Categories */}
-                        {isSticky ? (
+                        
                             <nav className="flex items-center gap-2 font-quicksand overflow-x-auto">
-                                <Link href="/shop" className="text-heading hover:text-brand hover:bg-gray-100 font-semibold text-sm transition-all whitespace-nowrap px-4 py-2 rounded-md">All</Link>
+                                {/* <Link href="/shop" className="text-heading hover:text-brand hover:bg-gray-100 font-semibold text-sm transition-all whitespace-nowrap px-4 py-2 rounded-md">All</Link> */}
                                 {categories.slice(0, 8).map((category) => (
                                     <Link
                                         key={category.id}
@@ -208,23 +198,7 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                     </Link>
                                 ))}
                             </nav>
-                        ) : (
-                            <nav className="flex items-center gap-8 font-quicksand">
-                                <Link href="/" className="text-heading hover:text-brand font-semibold transition-colors">Home</Link>
-                                <Link href="/about" className="text-heading hover:text-brand font-semibold transition-colors">About</Link>
-                                <Link href="/shop" className="text-heading hover:text-brand font-semibold transition-colors">Shop</Link>
-                                <Link href="/vendors" className="text-heading hover:text-brand font-semibold transition-colors">Vendors</Link>
-                                <div className="relative group">
-                                    <Link href="/blog" className="text-heading hover:text-brand font-semibold transition-colors flex items-center gap-1">
-                                        Blog
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </Link>
-                                </div>
-                                <Link href="/contact" className="text-heading hover:text-brand font-semibold transition-colors">Contact</Link>
-                            </nav>
-                        )}
+                        
 
                         {/* Cart Icon (Sticky Nav) */}
                         {isSticky && (
@@ -241,17 +215,6 @@ export default function Header({ isSticky, onMobileMenuToggle }) {
                                 </div>
                                 <span className="text-sm font-semibold">Basket</span>
                             </Link>
-                        )}
-
-                        {/* Hotline */}
-                        {!isSticky && (
-                            <div className="flex items-center gap-3 font-quicksand">
-                                <img src="/images/frontend/theme/icons/icon-headphone.svg" alt="Support" className="w-10 h-10" />
-                                <div>
-                                    <span className="text-brand font-bold text-xl">{siteSettings?.site_phone || '+265 999 123 456'}</span>
-                                    <p className="text-xs text-body font-lato">24/7 Support Center</p>
-                                </div>
-                            </div>
                         )}
                     </div>
                 </div>

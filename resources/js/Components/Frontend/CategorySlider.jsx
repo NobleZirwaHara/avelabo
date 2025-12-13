@@ -53,7 +53,7 @@ export default function CategorySlider({ categories = [] }) {
                                 className="w-16 h-16 mx-auto mb-3 object-contain"
                                 onError={(e) => { e.target.src = '/images/frontend/placeholder-category.png'; }}
                             />
-                            <h6 className="text-heading font-semibold text-sm mb-1">{category.name}</h6>
+                            <h6 className="text-heading font-semibold text-sm mb-1 h-10 line-clamp-2">{category.name}</h6>
                             <p className="text-body text-xs">{category.products_count || 0} items</p>
                         </Link>
                     </SwiperSlide>
