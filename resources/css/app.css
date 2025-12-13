@@ -429,3 +429,29 @@ textarea:focus {
 /* Font Family Utilities */
 .font-quicksand { font-family: 'Quicksand', ui-sans-serif, system-ui, sans-serif; }
 .font-lato { font-family: 'Lato', ui-sans-serif, system-ui, sans-serif; }
+
+/* Global Cursor Styles */
+a,
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+label {
+    cursor: pointer;
+}
+
+/* Toast Animation */
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+}
