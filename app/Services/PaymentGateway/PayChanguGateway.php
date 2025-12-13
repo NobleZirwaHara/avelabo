@@ -20,7 +20,7 @@ class PayChanguGateway implements PaymentGatewayInterface
         $this->secretKey = config('services.paychangu.secret_key');
         $this->testMode = config('services.paychangu.test_mode', true);
         $this->baseUrl = $this->testMode
-            ? 'https://api.paychangu.com/test'
+            ? 'https://api.paychangu.com'
             : 'https://api.paychangu.com';
     }
 

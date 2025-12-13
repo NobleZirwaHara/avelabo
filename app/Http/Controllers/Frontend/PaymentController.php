@@ -12,6 +12,7 @@ use App\Services\OrderService;
 use App\Services\PaymentGateway\PaymentGatewayFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PaymentController extends Controller
 {
@@ -88,7 +89,7 @@ class PaymentController extends Controller
             $gateway = PaymentGatewayFactory::create($paymentGateway->slug);
             $response = $gateway->initializePayment($order, [
                 'callback_url' => route('payment.callback'),
-                'return_url' => route('checkout.success', ['order' => $order->order_number]),
+                'return_url' => route('checkout.cancel', ['order' => $order->order_number]),
             ]);
 
             if ($response->isSuccessful()) {
@@ -103,7 +104,10 @@ class PaymentController extends Controller
 
                 // Redirect to payment gateway
                 if ($response->hasRedirect()) {
-                    return redirect()->away($response->redirectUrl);
+                    
+                    Log::info('Redirecting to payment gateway: ' . $response->redirectUrl);
+
+                    return Inertia::location($response->redirectUrl);
                 }
 
                 // If no redirect (direct payment success), clear cart

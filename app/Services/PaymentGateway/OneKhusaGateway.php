@@ -269,14 +269,17 @@ class OneKhusaGateway implements PaymentGatewayInterface
                 'apiKey' => $this->apiKey,
                 'apiSecret' => $this->apiSecret,
                 'organisationId' => $this->organizationId,
-                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'merchantAccountNumber' => (int) $this->merchantAccountNumber,
             ]);
 
-            $response = Http::post($this->baseUrl . '/account/getAccessToken', [
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl . '/account/getAccessToken', [
                 'apiKey' => $this->apiKey,
                 'apiSecret' => $this->apiSecret,
                 'organisationId' => $this->organizationId,
-                'merchantAccountNumber' => $this->merchantAccountNumber,
+                'merchantAccountNumber' => (int) $this->merchantAccountNumber,
             ]);
 
             if ($response->successful()) {
